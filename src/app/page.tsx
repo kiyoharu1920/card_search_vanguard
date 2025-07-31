@@ -113,7 +113,7 @@ export default function Home() {
       const iframe = document.createElement("iframe");
       const res = await fetch(iframeURL);
       if (res.ok) {
-        iframe.srcdoc = await fetch(iframeURL).then((res) => res.text());
+        iframe.srcdoc = await res.text();
         iframe.className = "w-[90vw] h-[100vh] border border-black";
       } else {
         iframe.srcdoc = `
