@@ -111,8 +111,16 @@ export default function Home() {
       divShops.insertAdjacentElement("beforeend", div);
 
       const iframe = document.createElement("iframe");
-      iframe.src = iframeURL;
-      iframe.className = "w-[90vw] h-[100vh] border border-black";
+      const res = await fetch(iframeURL);
+      if (res.ok) {
+        iframe.srcdoc = await fetch(iframeURL).then((res) => res.text());
+        iframe.className = "w-[90vw] h-[100vh] border border-black";
+      } else {
+        iframe.srcdoc = `
+        <p>読み込みできませんでした</p>
+        <p>直接リンクに飛ぶと見れるかもしれません</p>
+        <p>errer_status:${res.status}</p>`;
+      }
 
       div.insertAdjacentElement("beforeend", iframe);
     });
