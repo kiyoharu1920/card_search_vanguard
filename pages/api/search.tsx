@@ -15,10 +15,9 @@ export default async function handler(
   }
 
   const url = new URL(urlParam);
+  console.log({ req_url: url.href });
 
   try {
-    const jqueryScript = `<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>`;
-
     // まずバイナリ取得
     const response = await fetch(url);
     const buffer = await response.arrayBuffer();
@@ -69,8 +68,10 @@ export default async function handler(
       decodedHtml = tempDecoded;
     }
 
-    // head タグ直前に jQuery を挿入
-    decodedHtml = decodedHtml.replace(/<\/head>/i, `${jqueryScript}\n</head>`);
+    //相対パスを絶対パスに変更
+    decodedHtml = decodedHtml.replace(/ href="\//g, ` href="${url.origin}\/`);
+    decodedHtml = decodedHtml.replace(/ action="\//g, ` action="${url.origin}\/`);
+    decodedHtml = decodedHtml.replace(/ src="\//g, ` src="${url.origin}\/`);
 
     res.status(200).send(decodedHtml);
   } catch (err) {

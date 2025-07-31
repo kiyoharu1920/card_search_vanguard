@@ -19,7 +19,7 @@ const shops = [
   },
   {
     name: "トレコロ",
-    url: "https://www.torecolo.jp/shop/goods/search.aspx?ct2=1050&search=x&keyword=レザエル&search=search",
+    url: "https://www.torecolo.jp/shop/goods/search.aspx?keyword=レザエル&seq=&search=検索する&variation=",
     searchQueryName: "keyword",
     charset: "utf-8",
   },
@@ -69,15 +69,6 @@ const shops = [
 
 export default function Home() {
   const [search, setSearch] = useState("");
-  const [shopA, setShopA] = useState([]);
-  // const [shopB, setShopB] = useState([])
-  // const [shopC, setShopC] = useState([])
-  // const [shopD, setShopD] = useState([])
-  // const [shopE, setShopE] = useState([])
-  // const [shopF, setShopF] = useState([])
-  // const [shopG, setShopG] = useState([])
-  // pages/api/search.ts
-
   const inputHandler = function (e: React.MouseEvent<HTMLInputElement>) {
     setSearch(e.currentTarget.value);
     console.log(search);
@@ -94,8 +85,6 @@ export default function Home() {
 
   const handleSearch = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setSearch(e.currentTarget.value);
-    console.log(e.currentTarget.value);
     const divShops = document?.querySelector(`div#shops`);
 
     if (!divShops) return; // shopを入れるdivが存在しなかったら処理を終了
@@ -104,7 +93,9 @@ export default function Home() {
     shops.forEach(async (shop) => {
       const { name, url, searchQueryName, charset } = shop;
       const shopURL = new URL(url);
+      console.log({ shopURL: shopURL.href });
       shopURL.searchParams.set(searchQueryName, search);
+      console.log({ shopURL: shopURL.href });
       if (shopURL.href.includes("amazon")) {
         //Amazonの場合は2重引用符を使用する
         shopURL.searchParams.set(searchQueryName, `"${search}"`);
