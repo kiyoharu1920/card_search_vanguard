@@ -112,9 +112,12 @@ export default function Home() {
 
       const iframe = document.createElement("iframe");
       const res = await fetch(iframeURL);
+      iframe.className = `border border-black rounded-lg shadow-md`;
       if (res.ok) {
         iframe.srcdoc = await res.text();
-        iframe.className = "w-[90vw] h-[100vh] border border-black";
+        iframe.classList.add("w-[90vw]", "h-[100vh]");
+        // iframe.className =
+        //   "w-full h-[600px] border border-black rounded-lg shadow-md";
       } else {
         iframe.srcdoc = `
         <p>読み込みできませんでした</p>
