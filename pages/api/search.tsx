@@ -1,0 +1,79 @@
+// pages/api/search.ts
+import type { NextApiRequest, NextApiResponse } from "next";
+import iconv from "iconv-lite";
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const urlParam = Array.isArray(req.query.url)
+    ? req.query.url[0]
+    : req.query.url;
+  if (!urlParam) {
+    res.status(400).json({ error: "You should add query." });
+    return;
+  }
+
+  const url = new URL(urlParam);
+
+  try {
+    const jqueryScript = `<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>`;
+
+    // まずバイナリ取得
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const buf = Buffer.from(buffer);
+
+    // 一旦 UTF-8 として暫定デコード（charset 抽出用）
+    const tempDecoded = iconv.decode(buf, "UTF-8");
+
+    // charset 抽出（meta charset / http-equiv content-type の両方対応）
+    let pageCharset = "UTF-8";
+    const charsetMatch =
+      tempDecoded.match(
+        /<meta[^>]+charset\s*=\s*['"]?\s*([a-zA-Z0-9_\-]+)\s*['"]?/i
+      ) ||
+      tempDecoded.match(
+        /<meta[^>]+http-equiv=["']content-type["'][^>]*content=["'][^"']*charset=([a-zA-Z0-9_\-]+)[^"']*["']/i
+      );
+
+    if (charsetMatch && charsetMatch[1]) {
+      pageCharset = charsetMatch[1].toUpperCase();
+    }
+
+    // UTF-8 以外の場合は iconv で変換
+    let decodedHtml: string;
+    if (pageCharset !== "UTF-8") {
+      try {
+        decodedHtml = iconv.decode(buf, pageCharset);
+      } catch (e) {
+        // iconv が直接対応していない場合（例：SHIFT_JIS → Windows-31J 互換）フォールバック
+        if (pageCharset.includes("SHIFT_JIS") || pageCharset.includes("SJIS")) {
+          decodedHtml = iconv.decode(buf, "SJIS");
+        } else if (
+          pageCharset.includes("CP932") ||
+          pageCharset.includes("WINDOWS-31J")
+        ) {
+          decodedHtml = iconv.decode(buf, "CP932");
+        } else {
+          // 最後の手段
+          decodedHtml = iconv.decode(buf, "UTF-8");
+        }
+      }
+      // charset を UTF-8 に書き換え
+      decodedHtml = decodedHtml.replace(
+        /charset\s*=\s*["']?.+?["']?/gi,
+        "charset=UTF-8"
+      );
+    } else {
+      decodedHtml = tempDecoded;
+    }
+
+    // head タグ直前に jQuery を挿入
+    decodedHtml = decodedHtml.replace(/<\/head>/i, `${jqueryScript}\n</head>`);
+
+    res.status(200).send(decodedHtml);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch or convert charset" });
+  }
+}
