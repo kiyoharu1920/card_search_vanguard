@@ -42,7 +42,7 @@ export default async function handler(
 
     // UTF-8 以外の場合は iconv で変換
     let decodedHtml: string;
-    if (pageCharset !== "UTF-8") {
+    if (/UTF-8/i.test(pageCharset)) {
       try {
         decodedHtml = iconv.decode(buf, pageCharset);
       } catch (e) {
@@ -70,11 +70,15 @@ export default async function handler(
 
     //相対パスを絶対パスに変更
     decodedHtml = decodedHtml.replace(/ href="\//g, ` href="${url.origin}\/`);
-    decodedHtml = decodedHtml.replace(/ action="\//g, ` action="${url.origin}\/`);
+    decodedHtml = decodedHtml.replace(
+      / action="\//g,
+      ` action="${url.origin}\/`
+    );
     decodedHtml = decodedHtml.replace(/ src="\//g, ` src="${url.origin}\/`);
 
     res.status(200).send(decodedHtml);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: "Failed to fetch or convert charset" });
   }
 }
